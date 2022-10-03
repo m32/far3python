@@ -17,15 +17,15 @@ By default, the log is saved to the file w:/temp/far3-py.log.
 
 * Fundamentals
 
-** plugins must be accessible via PYTHONPATH
-** the plugins are loaded with the command "py:load filename" for example py:load ucharmap
-** unloading the plugin is done with the command "py:unload filename" for example py:unload ucharmap
+- plugins must be accessible via PYTHONPATH
+- the plugins are loaded with the command "py:load filename" for example py:load ucharmap
+- unloading the plugin is done with the command "py:unload filename" for example py:unload ucharmap
 
-** ['ucharmap](far3examples/ucharmap.py) - an example plugin showing part of the UTF-8 character set
+- [ucharmap](far3examples/ucharmap.py) - an example plugin showing part of the UTF-8 character set
     F11 + "Python Character Map" - display its dialog
     after pressing Enter/OK selected character is coppied into clipboard, character selection is done
     with mouse or arrows
-** ['utranslate](far3examples/utranslate.py) - how to use Google translate for spellchecker and text translation
+- [utranslate](far3examples/utranslate.py) - how to use Google translate for spellchecker and text translation
     F11 + "Python Translate" - display help dialog
 
 ## Testing
