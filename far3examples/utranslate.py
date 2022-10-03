@@ -9,6 +9,7 @@ from far3 import fardialogbuilder as dlgb
 log = logging.getLogger(__name__)
 
 
+import debugpy
 import shlex
 import optparse
 from far3packages import googletranslate
@@ -44,6 +45,8 @@ class Plugin(PluginBase):
     def CommandLine(self, line):
         cmd = line.split(' ', 1)
         if cmd[0] == 'utranslate':
+            if len(cmd) > 1 and cmd[1] == 'debug':
+                debugpy.breakpoint()
             return self.Dialog()
         if len(cmd) == 1:
             return
@@ -94,8 +97,9 @@ class Plugin(PluginBase):
         def DialogProc(hDlg, Msg, Param1, Param2):
             if Msg == ffic.DN_INITDIALOG:
                 try:
-                    s = self.info.FSF.PasteFromClipboard(ffic.FCT_STREAM)
-                    s = self.f2s(s)
+                    data = self.s2f('0'*120)
+                    nb = self.info.FSF.PasteFromClipboard(ffic.FCT_STREAM, data, 120)
+                    s = self.f2s(data)
                 except:
                     log.exception('DN_INITDIALOG.1')
                     s = "And do beautiful things"

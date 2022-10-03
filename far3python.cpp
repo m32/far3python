@@ -60,7 +60,8 @@ static void python_log(const char *function, unsigned int line, const char *form
                 PyErr_Print(); \
                 result = default; \
             } \
-        } \
+        } else \
+            result = default; \
         Py_DECREF(pyresult); \
     }
 
@@ -73,6 +74,7 @@ static void python_log(const char *function, unsigned int line, const char *form
                 result = default; \
             } \
         } \
+            result = default; \
         Py_DECREF(pyresult); \
     }
 
@@ -158,7 +160,7 @@ public:
     {
         pluginDir = ReplaceAll(pythonPluginInstallDir, std::string("\\"), std::string("\\\\"));
 
-        std::wstring progname = L"python";
+        std::wstring progname = L"far3python";
 
         Py_SetProgramName((wchar_t *)progname.c_str());
         Py_Initialize();
@@ -252,7 +254,7 @@ eof:
 HANDLE   WINAPI AnalyseW(const struct AnalyseInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "AnalyseW\n", Info);
-    HANDLE result = INVALID_HANDLE_VALUE;
+    HANDLE result = NULL;
     return result;
 }
 
@@ -353,7 +355,7 @@ HANDLE   WINAPI OpenW(const struct OpenInfo *Info)
     if( g_python_holder == nullptr )
         return result;
     PyObject *pyresult = g_python_holder->vcall("OpenW", 1, Info);
-    PYTHON_HANDLE(INVALID_HANDLE_VALUE)
+    PYTHON_HANDLE(NULL)
     return result;
 }
 
