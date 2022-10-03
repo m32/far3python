@@ -1,0 +1,33 @@
+LIBRARY
+EXPORTS
+	AnalyseW
+	CloseAnalyseW
+	ClosePanelW
+	CompareW
+	ConfigureW
+	DeleteFilesW
+	ExitFARW
+	FreeFindDataW
+	GetFilesW
+	GetFindDataW
+	GetGlobalInfoW
+	GetOpenPanelInfoW
+	GetPluginInfoW
+	MakeDirectoryW
+	OpenW
+	ProcessDialogEventW
+	ProcessEditorEventW
+	ProcessEditorInputW
+	ProcessPanelEventW
+	ProcessHostFileW
+	ProcessPanelInputW
+	ProcessConsoleInputW
+	ProcessSynchroEventW
+	ProcessViewerEventW
+	PutFilesW
+	SetDirectoryW
+	SetFindListW
+	SetStartupInfoW
+	GetContentFieldsW
+	GetContentDataW
+	FreeContentDataW
