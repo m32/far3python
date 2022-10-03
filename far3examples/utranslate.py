@@ -169,13 +169,12 @@ class Plugin(PluginBase):
 
     def OpenW(self, info):
         _MsgItems = [
-            self.s2f("Python Translate/Spellcheck from="),
+            self.s2f("Python Translate/Spellcheck"),
             self.s2f(""),
             self.s2f("From shell:"),
             self.s2f("  py:translate --from=en --to=pl --text='And do beautiful things'"),
             self.s2f("  py:spell --lang=en --text='And do beautifull things'"),
-            self.s2f("From editor:"),
-            self.s2f("  copy text to clipboard, execute plugin"),
+            self.s2f("  py:utrnaslate"),
             self.s2f(""),
             self.s2f("Result is in clipboard :)"),
             self.s2f(""),
