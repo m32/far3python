@@ -61,8 +61,8 @@ class Plugin(PluginBase):
         ])
         Items = [
             (ffic.DI_DOUBLEBOX,   3,  1, 38, 18, {'Selected':0}, ffi.NULL, ffi.NULL, 0, self.s2f("Character Map"), 0, 0, (0, 0)),
-            (ffic.DI_BUTTON,      7, 17, 12, 18, {'Selected':0}, ffi.NULL, ffi.NULL, ffic.DIF_DEFAULTBUTTON + ffic.DIF_CENTERGROUP, self.s2f("OK"), 0, 0, (0, 0)),
-            (ffic.DI_BUTTON,     13, 17, 38, 18, {'Selected':0}, ffi.NULL, ffi.NULL, ffic.DIF_CENTERGROUP, self.s2f("Cancel"), 0, 0, (0, 0)),
+            (ffic.DI_BUTTON,      0, 17,  0, 18, {'Selected':0}, ffi.NULL, ffi.NULL, ffic.DIF_CENTERGROUP|ffic.DIF_DEFAULTBUTTON, self.s2f("OK"), 0, 0, (0, 0)),
+            (ffic.DI_BUTTON,      0, 17,  0, 18, {'Selected':0}, ffi.NULL, ffi.NULL, ffic.DIF_CENTERGROUP, self.s2f("Cancel"), 0, 0, (0, 0)),
             (ffic.DI_USERCONTROL, 3,  2, 38, 16, {'Selected':0}, ffi.NULL, ffi.NULL, ffic.DIF_FOCUS, ffi.NULL, 0, 0, (0, 0)),
         ]
         self.cur_row = 0

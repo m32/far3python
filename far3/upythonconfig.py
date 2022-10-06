@@ -31,7 +31,7 @@ class Plugin(PluginBase):
         try:
             self.settings.Open()
             try:
-                path = self.settings.GetString('PLUGINSPATH')
+                path = self.settings.Get('PLUGINSPATH', '')
             finally:
                 self.settings.Close()
         except:
@@ -69,7 +69,7 @@ class Plugin(PluginBase):
         try:
             self.settings.Open()
             try:
-                rc = self.settings.SetString('PLUGINSPATH', path)
+                rc = self.settings.Set('PLUGINSPATH', path)
             finally:
                 self.settings.Close()
             return

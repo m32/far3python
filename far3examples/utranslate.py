@@ -156,7 +156,7 @@ class Plugin(PluginBase):
                 dlgb.HSizer(dlgb.TEXT("Result:"), dlgb.Spacer(), dlgb.EDIT("result", 60, 120)),
                 dlgb.HLine(),
                 dlgb.HSizer(
-                    dlgb.BUTTON('perform', "Perform", True, flags=ffic.DIF_CENTERGROUP|ffic.DIF_BTNNOCLOSE),
+                    dlgb.BUTTON('perform', "Perform", flags=ffic.DIF_CENTERGROUP|ffic.DIF_DEFAULTBUTTON|ffic.DIF_BTNNOCLOSE),
                     dlgb.BUTTON('close', "Close", flags=ffic.DIF_CENTERGROUP),
                 ),
             ),

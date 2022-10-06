@@ -47,7 +47,7 @@ class Plugin(PluginBase):
                 while True:
                     data = conn.recv(1024)
                     log.debug('socket: {}'.format(data))
-                    if data.decode() == "stop":
+                    if not data or data.decode() == "stop":
                         conn.close()
                         log.debug('done')
                         return

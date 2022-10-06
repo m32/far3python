@@ -1,8 +1,12 @@
 #!/usr/bin/env vpython3
-import io
+import logging
 from far3.far3cffi import ffi, ffic
 from far3 import fardialogsizer as sizer
 from far3.fardialog import Dialog
+
+
+log = logging.getLogger(__name__)
+
 
 def dialogitem(Type=0, X1=0, Y1=0, X2=0, Y2=0, Param=None, History=None, Mask=None, Flags=0, Data=None, MaxLength=0, UserData=None, Reserved=None):
     Param = Param or {'Selected':0}
@@ -29,7 +33,7 @@ class Element(sizer.Window):
             setattr(dlg, "ID_"+self.varname, self.no)
 
     def makeItem(self, dlg):
-        pass
+        return None
 
 
 class Spacer(Element):
@@ -65,6 +69,7 @@ class TEXT(Element):
             Data = dlg.s2f(self.text)
         )
         dlg.dialogItems.append(item)
+        return item
 
 
 class EDIT(Element):
@@ -102,6 +107,7 @@ class EDIT(Element):
             MaxLength = self.maxlength,
         )
         dlg.dialogItems.append(item)
+        return item
 
 
 class PASSWORD(EDIT):
@@ -127,10 +133,9 @@ class MEMOEDIT(EDIT):
 class BUTTON(Element):
     dit = "DI_BUTTON"
 
-    def __init__(self, varname, text, default=False, flags=0):
+    def __init__(self, varname, text, flags=0):
         super().__init__(varname)
         self.text = text
-        self.default = default
         self.flags = flags
 
     def get_best_size(self):
@@ -145,10 +150,11 @@ class BUTTON(Element):
             self.pos[1],
             self.pos[0] + w,
             self.pos[1] + h - 1,
-            Flags = self.flags or ffic.DIF_DEFAULT if self.default else 0,
+            Flags = self.flags,
             Data = dlg.s2f(self.text),
         )
         dlg.dialogItems.append(item)
+        return item
 
 
 class CHECKBOX(Element):
@@ -173,6 +179,7 @@ class CHECKBOX(Element):
             Data = dlg.s2f(self.text),
         )
         dlg.dialogItems.append(item)
+        return item
 
 
 class RADIOBUTTON(Element):
@@ -199,6 +206,7 @@ class RADIOBUTTON(Element):
             Data = dlg.s2f(self.text),
         )
         dlg.dialogItems.append(item)
+        return item
 
 
 class COMBOBOX(Element):
@@ -245,6 +253,7 @@ class COMBOBOX(Element):
             Param = param,
         )
         dlg.dialogItems.append(item)
+        return item
 
 
 class LISTBOX(Element):
@@ -292,6 +301,7 @@ class LISTBOX(Element):
             Flags = ffic.DIF_LISTNOBOX,
         )
         dlg.dialogItems.append(item)
+        return item
 
 
 class USERCONTROL(Element):
@@ -315,6 +325,7 @@ class USERCONTROL(Element):
             self.pos[1] + h - 1,
         )
         dlg.dialogItems.append(item)
+        return item
 
 
 class HLine(Element):
@@ -334,6 +345,7 @@ class HLine(Element):
             Flags = ffic.DIF_SEPARATOR,
         )
         dlg.dialogItems.append(item)
+        return item
 
 
 class HSizer(sizer.HSizer):
@@ -350,7 +362,10 @@ class HSizer(sizer.HSizer):
 
     def makeItem(self, dlg):
         for control in self.controls:
-            control.makeItem(dlg)
+            item = control.makeItem(dlg)
+            if item is not None and (item[8]&ffic.DIF_CENTERGROUP) != 0:
+                item[1] = 0
+                item[3] = 0
 
 
 class VSizer(sizer.VSizer):

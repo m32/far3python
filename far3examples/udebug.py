@@ -84,7 +84,7 @@ class Plugin(PluginBase):
                 dlgb.HSizer(dlgb.TEXT("Host:"), dlgb.Spacer(), dlgb.EDIT("host", 32, 32)),
                 dlgb.HSizer(dlgb.TEXT("Port:"), dlgb.Spacer(), dlgb.EDIT("port", 5, 5)),
                 dlgb.HSizer(
-                    dlgb.BUTTON('ok', "Ok", True, flags=ffic.DIF_CENTERGROUP),
+                    dlgb.BUTTON('ok', "Ok", flags=ffic.DIF_CENTERGROUP),
                     dlgb.BUTTON('cancel', "Cancel", flags=ffic.DIF_CENTERGROUP),
                 ),
             ),
