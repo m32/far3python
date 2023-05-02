@@ -21,7 +21,7 @@ for s in re.findall("'.+'", data):
     data = data.replace(s, t)
 data = data.replace("#line", "//#line")
 data = data.replace("#pragma", "//#pragma")
-open('far3cffi.py.cffi', 'wt').write(data)
+open('far3cffi.py.h', 'wt').write(data)
 
 if 0:
     ffi = cffi.FFI()

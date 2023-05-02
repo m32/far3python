@@ -22,25 +22,17 @@ class OptionParser(optparse.OptionParser):
         raise ValueError('bad option')
 
 class Plugin(PluginBase):
-    class PluginInfo:
-        name = 'utranslate'
-        flags = ffic.PF_NONE
-        title = "Python Translate"
-        author = "Grzegorz Makarewicz <mak@trisoft.com.pl>"
-        description = title
-        pyguid = uuid.UUID('{308868BA-5773-4C89-8142-DF877868E06A}')
-        guid = uuid.UUID('{A01E7520-F997-46BD-AB47-4F0AD76436FB}')
-        version = (1, 0, 0, 0, ffic.VS_SPECIAL)
+    openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER"]
+    name = 'utranslate'
+    flags = ffic.PF_NONE
+    title = "Python Translate"
+    author = "Grzegorz Makarewicz <mak@trisoft.com.pl>"
+    description = title
+    guid = uuid.UUID('{A01E7520-F997-46BD-AB47-4F0AD76436FB}')
+    guid1 = uuid.UUID('{F0432EB3-A7A7-4FAA-A1B0-046EDF328A03}')
 
-        openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER"]
-
-    def __init__(self, parent, info):
-        super().__init__(parent, info)
-        self.guid1 = uuid.UUID('{F0432EB3-A7A7-4FAA-A1B0-046EDF328A03}')
-
-    @staticmethod
-    def HandleCommandLine(line):
-        return line in ('translate', 'spell', 'utranslate')
+    def __init__(self, info):
+        super().__init__(info)
 
     def CommandLine(self, line):
         cmd = line.split(' ', 1)
@@ -143,17 +135,29 @@ class Plugin(PluginBase):
             "helptopic",
             0,
             dlgb.VSizer(
-                dlgb.HSizer(dlgb.TEXT("Text:"), dlgb.Spacer(), dlgb.EDIT("text", 60, 120)),
                 dlgb.HSizer(
-                    dlgb.TEXT("Operation:"), dlgb.Spacer(),
+                    dlgb.TEXT("Text:"),
+                    dlgb.EDIT("text", 60, 120)
+                ),
+                dlgb.HSizer(
+                    dlgb.TEXT("Operation:"),
                     dlgb.RADIOBUTTON('spell', "Spell", True, flags=ffic.DIF_GROUP),
                     dlgb.Spacer(),
                     dlgb.RADIOBUTTON('translate', "Translate"),
                 ),
-                dlgb.HSizer(dlgb.TEXT("From:"), dlgb.Spacer(), dlgb.EDIT("from", 4, 4)),
-                dlgb.HSizer(dlgb.TEXT("To:"), dlgb.Spacer(), dlgb.EDIT("to", 4, 4)),
+                dlgb.HSizer(
+                    dlgb.TEXT("From:"),
+                    dlgb.EDIT("from", 4, 4)
+                ),
+                dlgb.HSizer(
+                    dlgb.TEXT("To:"),
+                    dlgb.EDIT("to", 4, 4)
+                ),
                 dlgb.HLine(),
-                dlgb.HSizer(dlgb.TEXT("Result:"), dlgb.Spacer(), dlgb.EDIT("result", 60, 120)),
+                dlgb.HSizer(
+                    dlgb.TEXT("Result:"),
+                    dlgb.EDIT("result", 60, 120)
+                ),
                 dlgb.HLine(),
                 dlgb.HSizer(
                     dlgb.BUTTON('perform', "Perform", flags=ffic.DIF_CENTERGROUP|ffic.DIF_DEFAULTBUTTON|ffic.DIF_BTNNOCLOSE),
@@ -162,8 +166,6 @@ class Plugin(PluginBase):
             ),
         )
         dlg = b.build(
-            self.UUID2GUID(self.PluginInfo.pyguid),
-            self.UUID2GUID(self.guid1),
             -1,
             -1
         )
@@ -172,27 +174,14 @@ class Plugin(PluginBase):
         self.info.DialogFree(dlg.hDlg)
 
     def OpenW(self, info):
-        _MsgItems = [
-            self.s2f("Python Translate/Spellcheck"),
-            self.s2f(""),
-            self.s2f("From shell:"),
-            self.s2f("  py:translate --from=en --to=pl --text='And do beautiful things'"),
-            self.s2f("  py:spell --lang=en --text='And do beautifull things'"),
-            self.s2f("  py:utrnaslate"),
-            self.s2f(""),
-            self.s2f("Result is in clipboard :)"),
-            self.s2f(""),
-            self.s2f("\x01"),
-            self.s2f("&Ok"),
-        ]
-        MsgItems = ffi.new("wchar_t *[]", _MsgItems)
-        self.info.Message(
-            self.UUID2GUID(self.PluginInfo.pyguid),
-            self.UUID2GUID(self.guid1),
-            ffic.FMSG_WARNING|ffic.FMSG_LEFTALIGN,    # Flags
-            self.s2f("Contents"),                               # HelpTopic
-            MsgItems,                                           # Items
-            len(MsgItems),                                      # ItemsNumber
-            1                                                   # ButtonsNumber
+        self.Message(
+            "Python Translate/Spellcheck",
+            "utranslate",
+            "From shell:",
+            "  py:translate --from=en --to=pl --text='And do beautiful things'",
+            "  py:spell --lang=en --text='And do beautifull things'",
+            "  py:utrnaslate",
+            "",
+            "Result is in clipboard :)",
         )
         return None

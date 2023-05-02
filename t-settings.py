@@ -1,6 +1,4 @@
-from far3.far3cffi import ffi, ffic
-from far3 import farsettings
-from far3 import pluginmanager
+from far3 import *
 
 import os
 cwd = os.getcwd().encode('ascii')
@@ -9,7 +7,7 @@ fcwd = ffi.new("char []", cwd)
 pluginmanager.PySetup(fcwd)
 
 def s2f(s):
-        return ffi.new("wchar_t []", s)
+    return ffi.new("wchar_t []", s)
 
 def f2s(s):
     return ffi.string(ffi.cast("wchar_t *", s))
@@ -60,9 +58,24 @@ class Info:
             return 1
         return 0
 
+from far3.plugin import PluginBase
+from far3.farsettings import Settings
+
+class Plugin(PluginBase):
+    name = 'pyconfig'
+    flags = ffic.PF_NONE
+    title = "Python plugin config"
+    author = "Grzegorz Makarewicz <mak@trisoft.com.pl>"
+    description = title
+    guid = uuid.UUID('{FB57FE63-08FE-4CF1-9BE4-1E1CB44C12B1}')
+
+    openFrom = ['PLUGINSMENU']
+
 info = Info()
-cls = farsettings.Settings(None, info)
-cls.Open()
+plugin = Plugin(info)
+
+cls = Settings()
+cls.Open(plugin)
 try:
     print('string', 'ala', 'ala')
     cls.Set('ala', 'ala')

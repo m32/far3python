@@ -71,7 +71,6 @@ class Plugin(PluginBase):
         self.max_row = len(symbols) // self.max_col
         self.first_text_item = len(Items)
         self.symbols = symbols
-        self.text = None
 
         for i in range(len(symbols)):
             row = i // self.max_col
@@ -155,13 +154,13 @@ class Plugin(PluginBase):
             ffi.NULL
         )
         res = self.info.DialogRun(hDlg)
-        log.debug('result={} text={}'.format(res, self.text))
-        if res == 1 and self.text:
+        self.info.DialogFree(hDlg)
+        log.debug('result={}'.format(res))
+        if res == 1:
             offset = self.cur_row*self.max_col+self.cur_col
             try:
                 text = self.symbols[offset]
                 log.debug('offset:{} row:{} col:{}, ch:{}'.format(offset, self.cur_row, self.cur_col, text))
                 self.info.FSF.CopyToClipboard(ffic.FCT_STREAM, self.s2f(text))
-            except IndexError:
+            except:
                 log.exception('offset:{} row:{} col:{}'.format(offset, self.cur_row, self.cur_col))
-        self.info.DialogFree(hDlg)

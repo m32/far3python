@@ -4,10 +4,11 @@
 #if defined(NO_PYTHON_PLUGIN)
 #pragma once
 #endif
+
 /*
 plugin.hpp
 
-Plugin API for Far Manager 3.0.6000.0
+Plugin API for Far Manager 3.0.6060.0
 */
 /*
 Copyright © 1996 Eugene Roshal
@@ -45,7 +46,7 @@ other possible license with no implications from the above license on them.
 #define FARMANAGERVERSION_MAJOR 3
 #define FARMANAGERVERSION_MINOR 0
 #define FARMANAGERVERSION_REVISION 0
-#define FARMANAGERVERSION_BUILD 6000
+#define FARMANAGERVERSION_BUILD 6060
 #define FARMANAGERVERSION_STAGE VS_RELEASE
 
 #ifndef RC_INVOKED
@@ -62,6 +63,7 @@ typedef GUID UUID;
 #else
 #define UUID GUID
 #endif
+
 
 #define CP_UNICODE    ((uintptr_t)1200)
 #define CP_REVERSEBOM ((uintptr_t)1201)
@@ -268,11 +270,11 @@ enum FARDIALOGITEMTYPES
 	DI_USERCONTROL                  =255,
 };
 
+#if defined(NO_PYTHON_PLUGIN)
 /*
    Check diagol element type has inputstring?
    (DI_EDIT, DI_FIXEDIT, DI_PSWEDIT, etc)
 */
-#if defined(NO_PYTHON_PLUGIN)
 static __inline BOOL IsEdit(enum FARDIALOGITEMTYPES Type)
 {
 	switch (Type)
@@ -1892,6 +1894,7 @@ enum FAR_REGEXP_CONTROL_COMMANDS
 	RECTL_MATCHEX                   = 4,
 	RECTL_SEARCHEX                  = 5,
 	RECTL_BRACKETSCOUNT             = 6,
+	RECTL_NAMEDGROUPINDEX           = 7,
 };
 
 struct RegExpMatch
@@ -2102,8 +2105,8 @@ enum FARCLIPBOARD_TYPE
 	FCT_COLUMN=2
 };
 
-// <C&C++>
 #if defined(NO_PYTHON_PLUGIN)
+// <C&C++>
 typedef int (WINAPIV *FARSTDSPRINTF)(wchar_t *Buffer,const wchar_t *Format,...);
 typedef int (WINAPIV *FARSTDSNPRINTF)(wchar_t *Buffer,size_t Sizebuf,const wchar_t *Format,...);
 typedef int (WINAPIV *FARSTDSSCANF)(const wchar_t *Buffer, const wchar_t *Format,...);

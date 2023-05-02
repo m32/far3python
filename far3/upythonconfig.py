@@ -10,38 +10,33 @@ log = logging.getLogger(__name__)
 
 
 class Plugin(PluginBase):
-    class PluginInfo:
-        name = 'pyconfig'
-        flags = ffic.PF_NONE
-        title = "Python plugin config"
-        author = "Grzegorz Makarewicz <mak@trisoft.com.pl>"
-        description = title
-        pyguid = uuid.UUID('{308868BA-5773-4C89-8142-DF877868E06A}')
-        guid = uuid.UUID('{FB57FE63-08FE-4CF1-9BE4-1E1CB44C12B1}')
-        version = (1, 0, 0, 0, ffic.VS_SPECIAL)
+    name = "pyconfig"
+    flags = ffic.PF_NONE
+    title = "Python plugin config"
+    author = "Grzegorz Makarewicz <mak@trisoft.com.pl>"
+    description = title
+    guid = uuid.UUID("{FB57FE63-08FE-4CF1-9BE4-1E1CB44C12B1}")
 
-        openFrom = ['PLUGINSMENU']
+    openFrom = ["CONFIGURE"]
 
-    def __init__(self, parent, info):
-        super().__init__(parent, info)
-        self.settings = Settings(self, self.info)
-
-    def OpenW(self, Info):
-        log.debug('plg: {}.OpenW'.format(self.PluginInfo.title))
+    def ConfigureW(self, Info):
+        log.debug("Open".format(self.title))
+        settings = Settings()
         try:
-            self.settings.Open()
+            settings.Open(self)
             try:
-                path = self.settings.Get('PLUGINSPATH', '')
+                path = settings.Get("PLUGINSPATH", "")
             finally:
-                self.settings.Close()
+                settings.Close()
         except:
-            log.exception('setting.getString')
-            path = None
-        path = path or ''
+            log.exception("setting.getString")
+            path = ""
+
+        log.debug("setting.getString={}".format(path))
 
         @ffi.callback("FARWINDOWPROC")
         def DialogProc(hDlg, Msg, Param1, Param2):
-            return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
+            return self.Info.DefDlgProc(hDlg, Msg, Param1, Param2)
 
         b = dlgb.DialogBuilder(
             self,
@@ -50,48 +45,34 @@ class Plugin(PluginBase):
             "pythonpath",
             0,
             dlgb.VSizer(
-                dlgb.HSizer(dlgb.TEXT("Python path:"), dlgb.Spacer(), dlgb.EDIT("path", 60, 120)),
+                dlgb.HSizer(
+                    dlgb.TEXT(text="Python path:"),
+                    dlgb.EDIT("path", width=60, maxlength=120)
+                ),
+                dlgb.HSizer(
+                    dlgb.BUTTON("vok", text="OK", flags=ffic.DIF_DEFAULTBUTTON|ffic.DIF_CENTERGROUP),
+                    dlgb.BUTTON("vcancel", text="Cancel", flags=ffic.DIF_CENTERGROUP),
+                ),
             ),
         )
         dlg = b.build(
-            self.UUID2GUID(self.PluginInfo.pyguid),
-            self.UUID2GUID(self.PluginInfo.guid),
             -1,
             -1
         )
+        log.debug("SetText({}, {})".format(dlg.ID_path, path))
         dlg.SetText(dlg.ID_path, path)
-        res = self.info.DialogRun(dlg.hDlg)
+        res = self.Info.DialogRun(dlg.hDlg)
         path = dlg.GetText(dlg.ID_path)
-        self.info.DialogFree(dlg.hDlg)
+        dlg.close()
         if res == -1:
             return
-        log.debug('path: {0}'.format(path))
+        log.debug("path: {0}".format(path))
+        settings = Settings()
         try:
-            self.settings.Open()
+            settings.Open(self)
             try:
-                rc = self.settings.Set('PLUGINSPATH', path)
+                settings.Set("PLUGINSPATH", path)
             finally:
-                self.settings.Close()
-            return
+                settings.Close()
         except:
-            log.exception('setting.setString')
-
-        _MsgItems = [
-            self.s2f("Python"),
-            self.s2f(""),
-            self.s2f("Error setting python path"),
-            self.s2f(""),
-            self.s2f("\x01"),
-            self.s2f("&Ok"),
-        ]
-        MsgItems = ffi.new("wchar_t *[]", _MsgItems)
-        self.info.Message(
-            self.UUID2GUID(self.PluginInfo.pyguid),
-            self.UUID2GUID(self.PluginInfo.guid),
-            ffic.FMSG_WARNING|ffic.FMSG_LEFTALIGN,  # Flags
-            self.s2f("Contents"),                   # HelpTopic
-            MsgItems,                               # Items
-            len(MsgItems),                          # ItemsNumber
-            1                                       # ButtonsNumber
-        )
-        return None
+            log.exception("setting.setString")

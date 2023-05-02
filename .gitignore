@@ -1,6 +1,6 @@
 .not-git/
 far3-installed/
-far3cffi.py.cffi
+far3cffi.py.h
 far3python.dll
 far3python.exp
 far3python.lib

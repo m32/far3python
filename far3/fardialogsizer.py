@@ -6,21 +6,27 @@ class Orientation:
     vertical = 1
 
 
-class Window:
-    def __init__(self, label="", pos=(0, 0), size=(0, 0)):
-        self.label = label
+class Window(object):
+    def __init__(self, varname, pos=(0, 0), size=(0, 0)):
+        self.varname = varname
         self.pos = pos
         self.size = size
+
+    def makeID(self, dlg):
+        dlg.elementid += 1
+        if self.varname is not None:
+            self.no = dlg.elementid
+            setattr(dlg, "ID_"+self.varname, self.no)
 
     def move(self, l, t, w, h):
         self.pos = (l, t)
         self.size = (w, h)
 
     def get_best_size(self):
-        return (len(self.label), 1)
+        raise IOError(2, '')
 
 
-class Box:
+class Box(object):
     def __init__(self, window, border):
         self.window = window
         self.border = border
@@ -39,7 +45,7 @@ class Box:
         )
 
 
-class Sizer:
+class Sizer(object):
     orientation = None
 
     def __init__(self, border=(0, 0, 0, 0)):
@@ -49,6 +55,10 @@ class Sizer:
 
     def add(self, w, border=(0, 0, 0, 0)):
         self.boxes.append(Box(w, border))
+
+    def makeID(self, dlg):
+        for box in self.boxes:
+            box.makeID(dlg)
 
     def move(self, x, y, w, h):
         self.size(x, y, w, h)

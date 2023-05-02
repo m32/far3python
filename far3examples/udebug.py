@@ -4,8 +4,6 @@ import uuid
 from far3.far3cffi import ffi, ffic
 from far3.plugin import PluginBase
 from far3 import fardialogbuilder as dlgb
-import debugpy
-
 
 log = logging.getLogger(__name__)
 
@@ -17,17 +15,15 @@ class Config:
     port = 5678
 
 class Plugin(PluginBase):
-    class PluginInfo:
-        name = 'udebug'
-        flags = ffic.PF_NONE
-        title = "Python debugpy"
-        author = "Grzegorz Makarewicz <mak@trisoft.com.pl>"
-        description = title
-        pyguid = uuid.UUID('{308868BA-5773-4C89-8142-DF877868E06A}')
-        guid = uuid.UUID('{A01E7520-F997-46BD-AB47-4F0AD76436FB}')
-        version = (1, 0, 0, 0, ffic.VS_SPECIAL)
+    name = 'udebug'
+    flags = ffic.PF_NONE
+    title = "Python debugpy"
+    author = "Grzegorz Makarewicz <mak@trisoft.com.pl>"
+    description = title
+    guid = uuid.UUID('{A01E7520-F997-46BD-AB47-4F0AD76436FB}')
+    version = (1, 0, 0, 0, ffic.VS_SPECIAL)
 
-        openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER"]
+    openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER"]
 
     def debug(self):
         if not Config.configured:
@@ -50,13 +46,14 @@ class Plugin(PluginBase):
         else:
             info = None
         log.debug('debug.4 {}'.format(info))
-        debugpy.wait_for_client()
+        #debugpy.wait_for_client()
         log.debug('debug.5')
         #debugpy.breakpoint()
         log.debug('debug.6')
 
     def breakpoint(self):
-        debugpy.breakpoint()
+        #debugpy.breakpoint()
+        pass
 
     @staticmethod
     def HandleCommandLine(line):
@@ -71,7 +68,7 @@ class Plugin(PluginBase):
     def OpenW(self, info):
         @ffi.callback("FARWINDOWPROC")
         def DialogProc(hDlg, Msg, Param1, Param2):
-            return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
+            return self.Info.DefDlgProc(hDlg, Msg, Param1, Param2)
 
         b = dlgb.DialogBuilder(
             self,
@@ -80,32 +77,36 @@ class Plugin(PluginBase):
             "helptopic",
             0,
             dlgb.VSizer(
-                dlgb.HSizer(dlgb.TEXT("Log path:"), dlgb.Spacer(), dlgb.EDIT("logpath", 60, 120)),
-                dlgb.HSizer(dlgb.TEXT("Host:"), dlgb.Spacer(), dlgb.EDIT("host", 32, 32)),
-                dlgb.HSizer(dlgb.TEXT("Port:"), dlgb.Spacer(), dlgb.EDIT("port", 5, 5)),
                 dlgb.HSizer(
-                    dlgb.BUTTON('ok', "Ok", flags=ffic.DIF_CENTERGROUP),
-                    dlgb.BUTTON('cancel', "Cancel", flags=ffic.DIF_CENTERGROUP),
+                    dlgb.TEXT(text="Log path:"),
+                    dlgb.EDIT("logpath", width=60, maxlength=120)
+                ),
+                dlgb.HSizer(
+                    dlgb.TEXT(text="Host:"),
+                    dlgb.EDIT("host", width=32, maxlength=32)
+                ),
+                dlgb.HSizer(
+                    dlgb.TEXT(text="Port:"),
+                    dlgb.EDIT("port", width=5, maxlength=5)
+                ),
+                dlgb.HSizer(
+                    dlgb.BUTTON('ok', text="Ok", flags=ffic.DIF_CENTERGROUP),
+                    dlgb.BUTTON('cancel', text="Cancel", flags=ffic.DIF_CENTERGROUP),
                 ),
             ),
         )
-        dlg = b.build(
-            self.UUID2GUID(self.PluginInfo.pyguid),
-            self.UUID2GUID(self.PluginInfo.guid),
-            -1,
-            -1
-        )
+        dlg = b.build(-1, -1)
 
         dlg.SetText(dlg.ID_logpath, Config.logto)
         dlg.SetText(dlg.ID_host, Config.host)
         dlg.SetText(dlg.ID_port, str(Config.port))
 
-        rc = self.info.DialogRun(dlg.hDlg)
+        rc = self.Info.DialogRun(dlg.hDlg)
         
         log.debug('result: rc={}'.format(rc))
-        if rc != -1:
+        if rc == dlg.ID_ok:
             logto = dlg.GetText(dlg.ID_logpath)
             host = dlg.GetText(dlg.ID_host)
             port = dlg.GetText(dlg.ID_port)
             log.debug('result: host={}, port={} logto={}'.format(host, port, logto))
-        self.info.DialogFree(dlg.hDlg)
+        self.Info.DialogFree(dlg.hDlg)
