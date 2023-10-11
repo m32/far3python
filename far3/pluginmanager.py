@@ -10,20 +10,7 @@ import logging.config
 logging.basicConfig(level=logging.INFO)
 log = None
 
-def handle_exception(exc_type, exc_value, exc_traceback):
-    if issubclass(exc_type, KeyboardInterrupt):
-        sys.__excepthook__(exc_type, exc_value, exc_traceback)
-        return
-
-    if log is not None:
-        log.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
-    else:
-        print(exc_type, exc_value, exc_traceback)
-        print()
-
-#sys.excepthook = handle_exception
-
-from .plugin import PluginBase
+from .plugin import PluginBase, handle_error
 
 # commands in shell window:
 #     py:load <python modulename>
@@ -92,6 +79,7 @@ class PluginManager(PluginBase):
         return v
 
     ################
+    @handle_error
     def PySetup(self, pluginDir):
         global log
         self.PLUGINROOT = ffi.string(ffi.cast("char *", pluginDir)).decode("utf-8")
@@ -118,6 +106,7 @@ class PluginManager(PluginBase):
         log.debug("sys.path={}".format(sys.path))
         log.debug("PLUGINROOT={}".format(self.PLUGINROOT))
 
+    @handle_error
     def SetStartupInfoW(self, _PSI, _FSF):
         log.debug("SetStartupInfoW({:08X}, {:08X})".format(_PSI, _FSF))
         self.Info = ffi.cast("struct PluginStartupInfo *", _PSI)
@@ -125,6 +114,7 @@ class PluginManager(PluginBase):
         from . import upythonconfig
         self.plugins.append(upythonconfig)
 
+    @handle_error
     def GetPluginInfoW(self, Info):
         def guid(uuid):
             s = uuid.hex[16:]
@@ -192,6 +182,7 @@ class PluginManager(PluginBase):
         Info.CommandPrefix = self.commandPrefix
         #self.Message("Python", "contents", "line1", "line2")
 
+    @handle_error
     def OpenW(self, Info):
         Info = ffi.cast("struct OpenInfo *", Info)
         g = self.GUID2UUID(Info.Guid)
@@ -239,6 +230,7 @@ class PluginManager(PluginBase):
                     return None
         return None
 
+    @handle_error
     def ConfigureW(self, Info):
         Info = ffi.cast("struct ConfigureInfo *", Info)
         g = self.GUID2UUID(Info.Guid)
@@ -250,5 +242,6 @@ class PluginManager(PluginBase):
                 plugin.ConfigureW(Info)
                 return
 
+    @handle_error
     def ExitFARW(self, Info):
         log.debug("ExitFARW({})".format(Info))

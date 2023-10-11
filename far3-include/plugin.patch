@@ -1,0 +1,129 @@
+--- plugin.hpp	2023-02-11 22:58:42.541331700 +0100
++++ plugin.hpp-	2022-12-08 02:08:56.000000000 +0100
+@@ -1,11 +1,9 @@
+ // validator: no-bom
+ #ifndef PLUGIN_HPP_3FC978E9_63BE_4FC2_8F96_8188B0AF8363
+ #define PLUGIN_HPP_3FC978E9_63BE_4FC2_8F96_8188B0AF8363
+-#if defined(NO_PYTHON_PLUGIN)
+ #pragma once
+-#endif
+ 
+ /*
+ plugin.hpp
+ 
+ Plugin API for Far Manager 3.0.6060.0
+@@ -49,22 +47,16 @@
+ #define FARMANAGERVERSION_BUILD 6060
+ #define FARMANAGERVERSION_STAGE VS_RELEASE
+ 
+ #ifndef RC_INVOKED
+ 
+-#if defined(NO_PYTHON_PLUGIN)
+ #include <stdint.h>
+ #include <windows.h>
+-#endif
+ 
+ #undef DefDlgProc
+ 
+-#if defined(NO_PYTHON_PLUGIN)
+ typedef GUID UUID;
+-#else
+-#define UUID GUID
+-#endif
+ 
+ 
+ #define CP_UNICODE    ((uintptr_t)1200)
+ #define CP_REVERSEBOM ((uintptr_t)1201)
+ #define CP_DEFAULT    ((uintptr_t)-1)
+@@ -268,11 +260,10 @@
+ 	DI_LISTBOX                      = 11,
+ 
+ 	DI_USERCONTROL                  =255,
+ };
+ 
+-#if defined(NO_PYTHON_PLUGIN)
+ /*
+    Check diagol element type has inputstring?
+    (DI_EDIT, DI_FIXEDIT, DI_PSWEDIT, etc)
+ */
+ static __inline BOOL IsEdit(enum FARDIALOGITEMTYPES Type)
+@@ -286,11 +277,10 @@
+ 			return TRUE;
+ 		default:
+ 			return FALSE;
+ 	}
+ }
+-#endif
+ 
+ typedef unsigned long long FARDIALOGITEMFLAGS;
+ static const FARDIALOGITEMFLAGS
+ 	DIF_BOXCOLOR              = 0x0000000000000200ULL,
+ 	DIF_GROUP                 = 0x0000000000000400ULL,
+@@ -2103,20 +2093,14 @@
+ 	FCT_ANY=0,
+ 	FCT_STREAM=1,
+ 	FCT_COLUMN=2
+ };
+ 
+-#if defined(NO_PYTHON_PLUGIN)
+ // <C&C++>
+ typedef int (WINAPIV *FARSTDSPRINTF)(wchar_t *Buffer,const wchar_t *Format,...);
+ typedef int (WINAPIV *FARSTDSNPRINTF)(wchar_t *Buffer,size_t Sizebuf,const wchar_t *Format,...);
+ typedef int (WINAPIV *FARSTDSSCANF)(const wchar_t *Buffer, const wchar_t *Format,...);
+-#else
+-typedef int (WINAPIV *FARSTDSPRINTF)(wchar_t *Buffer,const wchar_t *Format);
+-typedef int (WINAPIV *FARSTDSNPRINTF)(wchar_t *Buffer,size_t Sizebuf,const wchar_t *Format);
+-typedef int (WINAPIV *FARSTDSSCANF)(const wchar_t *Buffer, const wchar_t *Format);
+-#endif
+ // </C&C++>
+ typedef void (WINAPI *FARSTDQSORT)(void *base, size_t nelem, size_t width, int (WINAPI *fcmp)(const void *, const void *,void *userparam),void *userparam);
+ typedef void   *(WINAPI *FARSTDBSEARCH)(const void *key, const void *base, size_t nelem, size_t width, int (WINAPI *fcmp)(const void *, const void *,void *userparam),void *userparam);
+ typedef size_t (WINAPI *FARSTDGETFILEOWNER)(const wchar_t *Computer,const wchar_t *Name,wchar_t *Owner,size_t Size);
+ typedef size_t (WINAPI *FARSTDGETNUMBEROFLINKS)(const wchar_t *Name);
+@@ -2425,11 +2409,10 @@
+ 	DWORD Revision;
+ 	DWORD Build;
+ 	enum VERSION_STAGE Stage;
+ };
+ 
+-#if defined(NO_PYTHON_PLUGIN)
+ static __inline BOOL CheckVersion(const struct VersionInfo* Current, const struct VersionInfo* Required)
+ {
+ 	return
+ 		(Current->Major > Required->Major) ||
+ 		(Current->Major == Required->Major && Current->Minor > Required->Minor) ||
+@@ -2440,11 +2423,10 @@
+ static __inline struct VersionInfo MAKEFARVERSION(DWORD Major, DWORD Minor, DWORD Revision, DWORD Build, enum VERSION_STAGE Stage)
+ {
+ 	const struct VersionInfo Info = {Major, Minor, Revision, Build, Stage};
+ 	return Info;
+ }
+-#endif
+ 
+ #define FARMANAGERVERSION MAKEFARVERSION(FARMANAGERVERSION_MAJOR,FARMANAGERVERSION_MINOR, FARMANAGERVERSION_REVISION, FARMANAGERVERSION_BUILD, FARMANAGERVERSION_STAGE)
+ 
+ struct GlobalInfo
+ {
+@@ -2936,11 +2918,10 @@
+ };
+ 
+ static const UUID FarGuid =
+ {0x00000000, 0x0000, 0x0000, {0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00}};
+ 
+-#if defined(NO_PYTHON_PLUGIN)
+ #ifdef __cplusplus
+ extern "C"
+ {
+ #endif
+ // Exported Functions
+@@ -2978,10 +2959,9 @@
+ 	void     WINAPI FreeContentDataW(const struct GetContentDataInfo *Info);
+ 
+ #ifdef __cplusplus
+ }
+ #endif
+-#endif
+ 
+ #endif /* RC_INVOKED */
+ 
+ #endif // PLUGIN_HPP_3FC978E9_63BE_4FC2_8F96_8188B0AF8363

@@ -46,7 +46,7 @@ class Plugin(PluginBase):
             0,
             dlgb.VSizer(
                 dlgb.HSizer(
-                    dlgb.TEXT(text="Python path:"),
+                    dlgb.TEXT(None, "Python path:"),
                     dlgb.EDIT("path", width=60, maxlength=120)
                 ),
                 dlgb.HSizer(

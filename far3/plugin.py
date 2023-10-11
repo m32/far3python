@@ -1,3 +1,4 @@
+import sys
 import logging
 import uuid
 from .far3cffi import ffi, ffic
@@ -5,6 +6,23 @@ from .far3cffi import ffi, ffic
 
 log = logging.getLogger(__name__)
 
+
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    log.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+
+def handle_error(func):
+    def __inner(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception:
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            handle_exception(exc_type, exc_value, exc_tb)
+    return __inner
 
 class PluginBase:
     farguid = uuid.UUID('{00000000-0000-0000-0000-000000000000}')
@@ -91,112 +109,141 @@ class PluginBase:
         pass
 
     ##################################
+    @handle_error
     def AnalyseW(self, Info):
         # HANDLE
         Info = ffi.cast("struct AnalyseInfo *", Info)
         return None
+    @handle_error
     def CloseAnalyseW(self, Info):
         Info = ffi.cast("struct CloseAnalyseInfo *", Info)
         pass
+    @handle_error
     def ClosePanelW(self, Info):
         Info = ffi.cast("struct ClosePanelInfo *", Info)
         pass
+    @handle_error
     def CompareW(self, Info):
         # intptr_t
         Info = ffi.cast("struct CompareInfo *", Info)
         return None
+    @handle_error
     def ConfigureW(self, Info):
         # intptr_t
         Info = ffi.cast("struct ConfigureInfo *", Info)
         return None
+    @handle_error
     def DeleteFilesW(self, Info):
         # intptr_t
         Info = ffi.cast("struct DeleteFilesInfo *", Info)
         return None
+    @handle_error
     def ExitFARW(self, Info):
         Info = ffi.cast("struct ExitInfo *", Info)
         pass
+    @handle_error
     def FreeFindDataW(self, Info):
         Info = ffi.cast("struct FreeFindDataInfo *", Info)
         pass
+    @handle_error
     def GetFilesW(self, Info):
         # intptr_t
         Info = ffi.cast("struct GetFilesInfo *", Info)
         return None
+    @handle_error
     def GetFindDataW(self, Info):
         # intptr_t
         Info = ffi.cast("struct GetFindDataInfo *", Info)
         return None
+    @handle_error
     def GetOpenPanelInfoW(self, Info):
         Info = ffi.cast("struct OpenPanelInfo *", Info)
         pass
+    @handle_error
     def GetPluginInfoW(self, Info):
         Info = ffi.cast("struct PluginInfo *", Info)
         pass
+    @handle_error
     def MakeDirectoryW(self, Info):
         # intptr_t
         Info = ffi.cast("struct MakeDirectoryInfo *", Info)
         return None
+    @handle_error
     def OpenW(self, Info):
         # HANDLE
         Info = ffi.cast("struct OpenInfo *", Info)
         return None
+    @handle_error
     def ProcessDialogEventW(self, Info):
         # intptr_t
         Info = ffi.cast("struct ProcessDialogEventInfo *", Info)
         return None
+    @handle_error
     def ProcessEditorEventW(self, Info):
         # intptr_t
         Info = ffi.cast("struct ProcessEditorEventInfo *", Info)
         return None
+    @handle_error
     def ProcessEditorInputW(self, Info):
         # intptr_t
         Info = ffi.cast("struct ProcessEditorInputInfo *", Info)
         return None
+    @handle_error
     def ProcessPanelEventW(self, Info):
         # intptr_t
         Info = ffi.cast("struct ProcessPanelEventInfo *", Info)
         return None
+    @handle_error
     def ProcessHostFileW(self, Info):
         # intptr_t
         Info = ffi.cast("struct ProcessHostFileInfo *", Info)
         return None
+    @handle_error
     def ProcessPanelInputW(self, Info):
         # intptr_t
         Info = ffi.cast("struct ProcessPanelInputInfo *", Info)
         return None
+    @handle_error
     def ProcessConsoleInputW(self, Info):
         # intptr_t
         Info = ffi.cast("struct ProcessConsoleInputInfo *", Info)
         return None
+    @handle_error
     def ProcessSynchroEventW(self, Info):
         # intptr_t
         Info = ffi.cast("struct ProcessSynchroEventInfo *", Info)
         return None
+    @handle_error
     def ProcessViewerEventW(self, Info):
         # intptr_t
         Info = ffi.cast("struct ProcessViewerEventInfo *", Info)
         return None
+    @handle_error
     def PutFilesW(self, Info):
         # intptr_t
         Info = ffi.cast("struct PutFilesInfo *", Info)
         return None
+    @handle_error
     def SetDirectoryW(self, Info):
         # intptr_t
         Info = ffi.cast("struct SetDirectoryInfo *", Info)
         return None
+    @handle_error
     def SetFindListW(self, Info):
         # intptr_t
         Info = ffi.cast("struct SetFindListInfo *", Info)
         return None
+    @handle_error
     def GetContentFieldsW(self, Info):
         # intptr_t
         Info = ffi.cast("struct GetContentFieldsInfo *", Info)
         return None
+    @handle_error
     def GetContentDataW(self, Info):
         # intptr_t
         Info = ffi.cast("struct GetContentDataInfo *", Info)
         return None
+    @handle_error
     def FreeContentDataW(self, Info):
         Info = ffi.cast("struct GetContentDataInfo *", Info)
         pass

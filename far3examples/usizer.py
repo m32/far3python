@@ -1,10 +1,13 @@
 import logging
-from far3.plugin import PluginBase
+import uuid
+
+from far3.far3cffi import ffi, ffic
+from far3.plugin import PluginBase, handle_error
 from far3.fardialogbuilder import (
-    Spacer,
-    TEXT, EDIT, PASSWORD, MASKED, MEMOEDIT,
+    TEXT, EDIT, PASSWORD, MASKED,
+    #MEMOEDIT,
     BUTTON, CHECKBOX, RADIOBUTTON, COMBOBOX,
-    LISTBOX, USERCONTROL,
+    LISTBOX, BOX, USERCONTROL,
     HLine,
     HSizer, VSizer,
     DialogBuilder
@@ -14,18 +17,19 @@ log = logging.getLogger(__name__)
 
 
 class Plugin(PluginBase):
-    label = "Python Dialog Demo"
-    openFrom = ["PLUGINSMENU"]
     name = "usizer"
     flags = ffic.PF_NONE
+    title = "Python Dialog Demo"
     author = "Grzegorz Makarewicz <mak@trisoft.com.pl>"
     description = title
     guid = uuid.UUID("{D75C02FC-FBC7-4CF7-8B0C-B617001A732C}")
+    version = (1, 0, 0, 0, ffic.VS_SPECIAL)
+    openFrom = ["PLUGINSMENU"]
 
+    @handle_error
     def OpenW(self, Info):
-        @self.ffi.callback("FARWINDOWPROC")
-        def DialogProc(hDlg, Msg, Param1, Param2):
-            if Msg == self.ffic.DN_INITDIALOG:
+        def pyDialogProc(hDlg, Msg, Param1, Param2):
+            if Msg == ffic.DN_INITDIALOG:
                 try:
                     dlg.SetText(dlg.ID_vapath, "vapath initial")
                     dlg.SetText(dlg.ID_vbpath, "vbpath initial")
@@ -33,28 +37,18 @@ class Plugin(PluginBase):
                     dlg.SetCheck(dlg.ID_vallow, 1)
                     dlg.SetFocus(dlg.ID_vseconds)
                     # override value from constructor
-                    dlg.SetCheck(dlg.ID_vr1, self.ffic.BSTATE_CHECKED)
-                    dlg.SetCheck(dlg.ID_vc3, self.ffic.BSTATE_CHECKED)
+                    dlg.SetCheck(dlg.ID_vr1, ffic.BSTATE_CHECKED)
+                    dlg.SetCheck(dlg.ID_vc3, ffic.BSTATE_CHECKED)
                 except:
                     log.exception('bang')
-            elif Msg == self.ffic.DN_BTNCLICK:
-                pass
-            elif Msg == self.ffic.DN_KEY:
-                if Param2 == self.ffic.KEY_LEFT:
-                    pass
-                elif Param2 == self.ffic.KEY_UP:
-                    pass
-                elif Param2 == self.ffic.KEY_RIGHT:
-                    pass
-                elif Param2 == self.ffic.KEY_DOWN:
-                    pass
-                elif Param2 == self.ffic.KEY_ENTER:
-                    pass
-                elif Param2 == self.ffic.KEY_ESC:
-                    pass
-            elif Msg == self.ffic.DN_MOUSECLICK:
-                pass
-            return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
+            return self.Info.DefDlgProc(hDlg, Msg, Param1, Param2)
+
+        @ffi.callback("FARWINDOWPROC")
+        def DialogProc(hDlg, Msg, Param1, Param2):
+            try:
+                return pyDialogProc(hDlg, Msg, Param1, Param2)
+            except:
+                log.exception('dialog proc')
 
         b = DialogBuilder(
             self,
@@ -64,30 +58,30 @@ class Plugin(PluginBase):
             0,
             VSizer(
                 HSizer(
-                    TEXT("a path"),
+                    TEXT(None, "a path"),
                     EDIT("vapath", 33, 40),
 #                    TEXT("X"),
                 ),
                 HSizer(
-                    TEXT("b path"),
+                    TEXT(None, "b path"),
                     EDIT("vbpath", 20, 30),
 #                    TEXT("X"),
                 ),
                 HLine(),
                 HSizer(
                     CHECKBOX('vallow', "Allow"),
-                    TEXT("Password"),
+                    TEXT(None, "Password"),
                     PASSWORD("vuserpass", 8, 15),
-                    TEXT("Seconds"),
+                    TEXT(None, "Seconds"),
                     MASKED("vseconds", "9999"),
 #                    TEXT("X"),
                 ),
                 #MEMOEDIT("vmemo", 40, 5, 512),
                 HLine(),
                 HSizer(
-                    RADIOBUTTON('vr1', "p1", flags=self.ffic.DIF_GROUP),
+                    RADIOBUTTON('vr1', "p1", flags=ffic.DIF_GROUP),
                     RADIOBUTTON('vr2', "p2"),
-                    RADIOBUTTON('vr3', "p3", self.ffic.BSTATE_CHECKED),
+                    RADIOBUTTON('vr3', "p3", ffic.BSTATE_CHECKED),
 #                    TEXT("X"),
                 ),
                 HSizer(
@@ -96,20 +90,19 @@ class Plugin(PluginBase):
                     VSizer(
                         CHECKBOX('vc1', "c1"),
                         CHECKBOX('vc2', "c2"),
-                        CHECKBOX('vc3', "c3", self.ffic.BSTATE_CHECKED),
+                        CHECKBOX('vc3', "c3", ffic.BSTATE_CHECKED),
                     ),
 #                    TEXT("X"),
                 ),
                 HLine(),
                 HSizer(
-                    BUTTON('vok', "OK", True, flags=self.ffic.DIF_CENTERGROUP),
-                    BUTTON('vcancel', "Cancel", flags=self.ffic.DIF_CENTERGROUP),
+                    BUTTON('vok', "OK", flags=ffic.DIF_DEFAULTBUTTON|ffic.DIF_CENTERGROUP),
+                    BUTTON('vcancel', "Cancel", flags=ffic.DIF_CENTERGROUP),
                 ),
             ),
         )
         dlg = b.build(-1, -1)
-
-        res = self.info.DialogRun(dlg.hDlg)
+        res = self.Info.DialogRun(dlg.hDlg)
         log.debug('''\
 ok={} \
 a path=[{}] \
@@ -141,4 +134,4 @@ vcombo={} \
     dlg.GetCurPos(dlg.ID_vlist),
     dlg.GetCurPos(dlg.ID_vcombo),
 ))
-        self.info.DialogFree(dlg.hDlg)
+        self.Info.DialogFree(dlg.hDlg)

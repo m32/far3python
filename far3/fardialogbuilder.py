@@ -49,20 +49,13 @@ class Element(sizer.Window):
     def get_best_size(self):
         return (self.width, self.height)
 
-    def makeItem(self, dlg):
-        w, h = self.get_best_size()
-        text = self.text
-        if text != ffi.NULL:
-            text = dlg.s2f(text)
-        mask = self.mask
-        if mask != ffi.NULL:
-            mask = dlg.s2f(mask)
+    def _makeItem(self, dlg, w, h, text, mask):
         dlg.dialogItems.append((
             getattr(ffic, self.dit),
             ffi.cast("intptr_t", self.pos[0]),
             ffi.cast("intptr_t", self.pos[1]),
-            ffi.cast("intptr_t", self.pos[0] + w - 1),
-            ffi.cast("intptr_t", self.pos[1] + h - 1),
+            ffi.cast("intptr_t", self.pos[0] + w),
+            ffi.cast("intptr_t", self.pos[1] + h),
             self.param,
             self.history,
             mask,
@@ -72,25 +65,39 @@ class Element(sizer.Window):
             self.userdata
         ))
 
+    def makeItem(self, dlg):
+        w, h = self.get_best_size()
+        text = self.text
+        if text != ffi.NULL:
+            text = dlg.s2f(text)
+        mask = self.mask
+        if mask != ffi.NULL:
+            self.flags = ffic.DIF_MASKEDIT
+            mask = dlg.s2f(mask)
+        self._makeItem(dlg, w-1, h-1, text, mask)
+
 class TEXT(Element):
     dit = "DI_TEXT"
+
+    def __init__(self, varname, text, **kwargs):
+        super().__init__(varname, text=text, **kwargs)
+
 
 class EDIT(Element):
     dit = "DI_EDIT"
 
-    def __init__(self, varname, width=None, mask=ffi.NULL, maxlength=None):
+    def __init__(self, varname, width, maxlength=None, mask=ffi.NULL, **kwrags):
         if mask != ffi.NULL:
-            flags = ffic.DIF_MASKEDIT
             maxlength = len(mask)
             width = len(mask)
         else:
-            param = {'Selected':ffi.cast("intptr_t", 0)}
-            flags = 0
             assert width is not None
-        super().__init__(varname, width=width, mask=mask, flags=flags, maxlength=maxlength or width)
+            maxlength=maxlength or width
+        super().__init__(varname, width=width, maxlength=maxlength, mask=mask, **kwrags)
 
     def get_best_size(self):
-        return (self.width+1, self.height)
+        #  text
+        return (1 + self.width, self.height)
 
 class PASSWORD(EDIT):
     dit = "DI_PSWEDIT"
@@ -100,14 +107,14 @@ class MASKED(EDIT):
     dit = "DI_FIXEDIT"
 
     def __init__(self, varname, mask):
-        super().__init__(varname, width=len(mask), mask=mask, maxlength=len(mask))
+        super().__init__(varname, width=len(mask), maxlength=len(mask), mask=mask)
 
 
 class BUTTON(Element):
     dit = "DI_BUTTON"
 
-    def __init__(self, varname, text, flags):
-        super().__init__(varname, text=text, flags=flags)
+    def __init__(self, varname, text, **kwargs):
+        super().__init__(varname, text=text, **kwargs)
 
     def get_best_size(self):
         # [ text ]
@@ -116,39 +123,39 @@ class BUTTON(Element):
 class CHECKBOX(Element):
     dit = "DI_CHECKBOX"
 
-    def __init__(self, varname, text, checked=0):
+    def __init__(self, varname, text, checked=0, **kwargs):
         param = {'Selected': checked}
-        super().__init__(varname, text=text, param=param)
+        super().__init__(varname, text=text, param=param, **kwargs)
 
     def get_best_size(self):
         # [?] text
-        return (1 + 1 + 1 + 1 + len(self.text), 1)
+        return (4 + self.width, self.height)
 
 class RADIOBUTTON(Element):
     dit = "DI_RADIOBUTTON"
 
-    def __init__(self, varname, text, checked=0):
+    def __init__(self, varname, text, checked=0, **kwargs):
         param = {'Selected': checked}
-        super().__init__(varname, text=text, param=param)
+        super().__init__(varname, text=text, param=param, **kwargs)
 
     def get_best_size(self):
         # (?) text
-        return (1 + 1 + 1 + 1 + len(self.text), 1)
+        return (4 + self.width, self.height)
 
 class COMBOBOX(Element):
     dit = "DI_COMBOBOX"
 
-    def __init__(self, varname, selected, *items):
-        super().__init__(varname)
+    def __init__(self, varname, selected, *items, **kwargs):
+        super().__init__(varname, **kwargs)
         self.selected = selected
         self.items = items
-        self.maxlen = max([len(s) for s in self.items])
+        self.width = max([len(s) for s in self.items])
         self.flist = None
         self.fitems = None
         self.s2f = None
 
     def get_best_size(self):
-        return (2 + self.maxlen, 1)
+        return (2 + self.width, 1)
 
     def makeItem(self, dlg):
         w, h = self.get_best_size()
@@ -169,36 +176,29 @@ class COMBOBOX(Element):
         self.fitems = fitems
         self.s2f = s2f
 
-        param = {'ListItems':flist}
-        dlg.dialogItems.append((
-            getattr(ffic, self.dit),
-            self.pos[0],
-            self.pos[1],
-            self.pos[0] + w - 2,
-            self.pos[1] + h - 1,
-            0,
-            param,
-            0,
-            0,
-            ffi.NULL,
-            0,
-        ))
+        self.param = {'ListItems':flist}
+        self._makeItem(dlg, w-2, h-1, self.text, self.mask)
 
 
 class LISTBOX(Element):
     dit = "DI_LISTBOX"
 
-    def __init__(self, varname, selected, *items):
-        super().__init__(varname)
+    def __init__(self, varname, selected, *items, **kwargs):
+        if "height" in kwargs:
+            height = kwargs.pop("height")
+        else:
+            height = len(items) + 2
+        super().__init__(varname, **kwargs)
         self.selected = selected
         self.items = items
-        self.maxlen = max([len(s) for s in self.items])
+        self.width = 1+max([len(s) for s in self.items])
+        self.height = height
         self.flist = None
         self.fitems = None
         self.s2f = None
 
     def get_best_size(self):
-        return (4 + self.maxlen, len(self.items))
+        return (4 + self.width, self.height)
 
     def makeItem(self, dlg):
         w, h = self.get_best_size()
@@ -219,20 +219,8 @@ class LISTBOX(Element):
         self.fitems = fitems
         self.s2f = s2f
 
-        param = {'ListItems':flist}
-        dlg.dialogItems.append((
-            getattr(ffic, self.dit),
-            self.pos[0],
-            self.pos[1],
-            self.pos[0] + w - 1,
-            self.pos[1] + h - 1,
-            0,
-            param,
-            ffic.DIF_LISTNOBOX,
-            0,
-            ffi.NULL,
-            0,
-        ))
+        self.param = {'ListItems':flist}
+        super().makeItem(dlg)
 
 
 class BOX(Element):
@@ -241,10 +229,8 @@ class BOX(Element):
 class USERCONTROL(Element):
     dit = "DI_USERCONTROL"
 
-    def __init__(self, varname, width, height):
-        super().__init__(varname, width=width, height=height)
-        self.width
-        self.height
+    def __init__(self, varname, width, height, **kwargs):
+        super().__init__(varname, width=width, height=height, **kwargs)
 
     def get_best_size(self):
         return (self.width, self.height)
@@ -314,10 +300,12 @@ class DialogBuilder(sizer.HSizer):
 
         box = BOX(None, self.title, w, h)
         box.pos = (3, 1)
+        box.width = w - 2
         box.makeItem(dlg)
+
         self.contents.makeItem(dlg)
 
-        if 1:
+        if 0:
             log.debug('{} build'.format('*'*20))
             for elem in dlg.dialogItems:
                 xdit, xx, xy, xw, xh, xparam, xhistory, xmask, xflags, xtext, xmaxlength, xuserdata = elem

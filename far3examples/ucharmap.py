@@ -9,17 +9,15 @@ log = logging.getLogger(__name__)
 
 
 class Plugin(PluginBase):
-    class PluginInfo:
-        name = 'ucharmap'
-        flags = ffic.PF_NONE
-        title = "Python Character Map"
-        author = "Grzegorz Makarewicz <mak@trisoft.com.pl>"
-        description = title
-        pyguid = uuid.UUID('{308868BA-5773-4C89-8142-DF877868E06A}')
-        guid = uuid.UUID('{C0D1792D-9A6A-4535-B178-5077B6CC6CB6}')
-        version = (1, 0, 0, 0, ffic.VS_SPECIAL)
+    name = 'ucharmap'
+    flags = ffic.PF_NONE
+    title = "Python Character Map"
+    author = "Grzegorz Makarewicz <mak@trisoft.com.pl>"
+    description = title
+    guid = uuid.UUID('{C0D1792D-9A6A-4535-B178-5077B6CC6CB6}')
+    version = (1, 0, 0, 0, ffic.VS_SPECIAL)
 
-        openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER"]
+    openFrom = ["PLUGINSMENU", "COMMANDLINE", "EDITOR", "VIEWER"]
 
     def __init__(self, parent, info):
         super().__init__(parent, info)
