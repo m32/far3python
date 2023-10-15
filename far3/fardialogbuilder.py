@@ -275,9 +275,9 @@ class VSizer(sizer.VSizer):
 
 
 class DialogBuilder(sizer.HSizer):
-    def __init__(self, plugin, dialogProc, title, helptopic, flags, contents, border=(2, 1, 2, 1)):
+    def __init__(self, dialog, dialogProc, title, helptopic, flags, contents, border=(2, 1, 2, 1)):
         super().__init__(border)
-        self.plugin = plugin
+        self.dialog = dialog
         self.dialogProc = dialogProc
         self.title = title
         self.helptopic = helptopic
@@ -287,46 +287,44 @@ class DialogBuilder(sizer.HSizer):
 
     def build(self, x, y):
 
-        dlg = Dialog(self.plugin)
-
         w, h = self.get_best_size()
         w = max(w + 1, len(self.title) + 2)
 
-        dlg.width = w
-        dlg.height = h
+        self.dialog.width = w
+        self.dialog.height = h
 
-        self.contents.makeID(dlg)
+        self.contents.makeID(self.dialog)
         self.size(3, 1, w, h)
 
         box = BOX(None, self.title, w, h)
         box.pos = (3, 1)
         box.width = w - 2
-        box.makeItem(dlg)
+        box.makeItem(self.dialog)
 
-        self.contents.makeItem(dlg)
+        self.contents.makeItem(self.dialog)
+        self.dialog.Ready(self)
 
         if 0:
             log.debug('{} build'.format('*'*20))
-            for elem in dlg.dialogItems:
+            for elem in self.dialog.dialogItems:
                 xdit, xx, xy, xw, xh, xparam, xhistory, xmask, xflags, xtext, xmaxlength, xuserdata = elem
                 log.debug('dit={} pos={} param={} hist={} mask={} flags={} text={} maxlength={} user={}'.format(
                     xdit, (xx, xy, xw, xh), xparam, xhistory, xmask, xflags, xtext, xmaxlength, xuserdata
                 ))
 
-        dlg.fdi = ffi.new("struct FarDialogItem []", dlg.dialogItems)
-        dlg.hDlg = dlg.Info.DialogInit(
-            self.plugin.UUID2GUID(self.plugin.pyguid),
-            self.plugin.UUID2GUID(self.plugin.guid),
+        self.dialog.fdi = ffi.new("struct FarDialogItem []", self.dialog.dialogItems)
+        self.dialog.hDlg = self.dialog.Info.DialogInit(
+            self.dialog.plugin.UUID2GUID(self.dialog.plugin.pyguid),
+            self.dialog.plugin.UUID2GUID(self.dialog.plugin.guid),
             ffi.cast("intptr_t", x),
             ffi.cast("intptr_t", y),
             ffi.cast("intptr_t", w + 4),
             ffi.cast("intptr_t", h + 2),
-            dlg.s2f(self.helptopic),
-            dlg.fdi,
-            len(dlg.fdi),
+            self.dialog.s2f(self.helptopic),
+            self.dialog.fdi,
+            len(self.dialog.fdi),
             ffi.cast("intptr_t", 0),
-            0,
+            self.flags,
             self.dialogProc,
             ffi.NULL
         )
-        return dlg

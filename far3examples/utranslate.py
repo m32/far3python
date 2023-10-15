@@ -3,6 +3,7 @@ import uuid
 
 from far3.far3cffi import ffi, ffic
 from far3.plugin import PluginBase
+from far3.far3dialog import Dialog
 from far3 import fardialogbuilder as dlgb
 
 
@@ -128,8 +129,9 @@ class Plugin(PluginBase):
                     dlg.SetText(dlg.ID_result, s)
             return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
 
+        dlg = Dialog(self)
         b = dlgb.DialogBuilder(
-            self,
+            dlg,
             DialogProc,
             "Python utranslate",
             "helptopic",
@@ -165,13 +167,13 @@ class Plugin(PluginBase):
                 ),
             ),
         )
-        dlg = b.build(
+        b.build(
             -1,
             -1
         )
 
         self.info.DialogRun(dlg.hDlg)
-        self.info.DialogFree(dlg.hDlg)
+        dlg.close()
 
     def OpenW(self, info):
         self.Message(

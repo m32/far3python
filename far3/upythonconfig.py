@@ -2,7 +2,7 @@ import logging
 import uuid
 
 from .far3cffi import ffi, ffic
-from .plugin import PluginBase
+from .plugin import PluginBase, handle_error
 from . import fardialogbuilder as dlgb
 from .farsettings import Settings
 
@@ -19,6 +19,7 @@ class Plugin(PluginBase):
 
     openFrom = ["CONFIGURE"]
 
+    @handle_error
     def ConfigureW(self, Info):
         log.debug("Open".format(self.title))
         settings = Settings()
@@ -38,8 +39,10 @@ class Plugin(PluginBase):
         def DialogProc(hDlg, Msg, Param1, Param2):
             return self.Info.DefDlgProc(hDlg, Msg, Param1, Param2)
 
+        dlg = dlgb.Dialog(self)
+
         b = dlgb.DialogBuilder(
-            self,
+            dlg,
             DialogProc,
             "Python path",
             "pythonpath",
@@ -55,14 +58,15 @@ class Plugin(PluginBase):
                 ),
             ),
         )
-        dlg = b.build(
+        b.build(
             -1,
             -1
         )
         log.debug("SetText({}, {})".format(dlg.ID_path, path))
         dlg.SetText(dlg.ID_path, path)
-        res = self.Info.DialogRun(dlg.hDlg)
+        res = dlg.Run()
         path = dlg.GetText(dlg.ID_path)
+
         dlg.close()
         if res == -1:
             return

@@ -1,5 +1,6 @@
 .not-git/
 far3-installed/
+__pycache__
 far3cffi.py.h
 far3python.dll
 far3python.exp

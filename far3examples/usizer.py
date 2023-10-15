@@ -10,7 +10,7 @@ from far3.fardialogbuilder import (
     LISTBOX, BOX, USERCONTROL,
     HLine,
     HSizer, VSizer,
-    DialogBuilder
+    Dialog, DialogBuilder
 )
 
 log = logging.getLogger(__name__)
@@ -50,8 +50,10 @@ class Plugin(PluginBase):
             except:
                 log.exception('dialog proc')
 
+        dlg = Dialog(self)
+
         b = DialogBuilder(
-            self,
+            dlg,
             DialogProc,
             "Python dialog",
             "helptopic",
@@ -101,8 +103,9 @@ class Plugin(PluginBase):
                 ),
             ),
         )
-        dlg = b.build(-1, -1)
-        res = self.Info.DialogRun(dlg.hDlg)
+        b.build(-1, -1)
+
+        res = dlg.Run()
         log.debug('''\
 ok={} \
 a path=[{}] \
@@ -134,4 +137,4 @@ vcombo={} \
     dlg.GetCurPos(dlg.ID_vlist),
     dlg.GetCurPos(dlg.ID_vcombo),
 ))
-        self.Info.DialogFree(dlg.hDlg)
+        dlg.close()

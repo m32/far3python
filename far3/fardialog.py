@@ -2,6 +2,7 @@ from .far3cffi import ffi, ffic
 
 class Dialog:
     def __init__(self, plugin):
+        self.plugin = plugin
         self.Info = plugin.Info
         self.s2f = plugin.s2f
         self.f2s = plugin.f2s
@@ -19,6 +20,21 @@ class Dialog:
         self.Info = None
         self.s2f = None
         self.f2s = None
+        self.fdi = None
+        self.hDlg = None
+        self.plugin = None
+
+    def Ready(self, builder):
+        pass
+
+    def Run(self):
+        return self.Info.DialogRun(self.hDlg)
+
+    def SuspendDialog(self):
+        self.Info.SendDlgMessage(self.hDlg, ffic.DM_ENABLEREDRAW, 0, ffi.NULL)
+
+    def ResumeDialog(self):
+        self.Info.SendDlgMessage(self.hDlg, ffic.DM_ENABLEREDRAW, 1, ffi.NULL)
 
     def RedrawDialog(self):
         self.Info.SendDlgMessage(self.hDlg, ffic.DM_REDRAW, 0, ffi.NULL)
@@ -35,7 +51,7 @@ class Dialog:
     def SetDlgItemData(self, ID, Data):
         self.Info.SendDlgMessage(self.hDlg, ffic.DM_SETITEMDATA, 0, Data)
 
-    def GetFocus(self, hDlg):
+    def GetFocus(self):
         return self.Info.SendDlgMessage(self.hDlg, ffic.DM_GETFOCUS, 0, ffi.NULL)
 
     def SetFocus(self, ID):

@@ -70,8 +70,10 @@ class Plugin(PluginBase):
         def DialogProc(hDlg, Msg, Param1, Param2):
             return self.Info.DefDlgProc(hDlg, Msg, Param1, Param2)
 
+        dlg = dlgb.Dialog(self)
+
         b = dlgb.DialogBuilder(
-            self,
+            dlg,
             DialogProc,
             "Python debugpy",
             "helptopic",
@@ -95,13 +97,13 @@ class Plugin(PluginBase):
                 ),
             ),
         )
-        dlg = b.build(-1, -1)
+        b.build(-1, -1)
 
         dlg.SetText(dlg.ID_logpath, Config.logto)
         dlg.SetText(dlg.ID_host, Config.host)
         dlg.SetText(dlg.ID_port, str(Config.port))
 
-        rc = self.Info.DialogRun(dlg.hDlg)
+        rc = dlg.Run()
         
         log.debug('result: rc={}'.format(rc))
         if rc == dlg.ID_ok:
@@ -109,4 +111,4 @@ class Plugin(PluginBase):
             host = dlg.GetText(dlg.ID_host)
             port = dlg.GetText(dlg.ID_port)
             log.debug('result: host={}, port={} logto={}'.format(host, port, logto))
-        self.Info.DialogFree(dlg.hDlg)
+        dlg.close()
