@@ -46,40 +46,6 @@ static void python_log(const char *function, unsigned int line, const char *form
 #endif
 }
 
-#define PYTHON_VOID() \
-    if (pyresult != NULL) { \
-        Py_DECREF(pyresult); \
-    }
-
-#define PYTHON_HANDLE(default) \
-    if (pyresult != NULL) { \
-        if( PyLong_Check(pyresult) ) { \
-            result = (HANDLE)PyLong_AsSsize_t(pyresult); \
-            if (PyErr_Occurred()) { \
-                PyErr_Print(); \
-                result = default; \
-            } \
-        } else \
-            result = default; \
-        Py_DECREF(pyresult); \
-    } else \
-        result = default;
-
-#define PYTHON_INT(default) \
-    if (pyresult != NULL) { \
-        if( PyLong_Check(pyresult) ) { \
-            result = PyLong_AsLong(pyresult); \
-            if (PyErr_Occurred()) { \
-                PyErr_Print(); \
-                result = default; \
-            } \
-        } \
-            result = default; \
-        Py_DECREF(pyresult); \
-    } else \
-        result = default;
-
-
 char pythonPluginInstallDir[512]="";
 
 std::string ReplaceAll(std::string str, const std::string& from, const std::string& to) {
@@ -174,137 +140,175 @@ public:
         Py_Finalize();
     }
 
-    PyObject *vcall(const char *func, int n, ...)
+    PyObject *pycall(const char *func, int n, va_list args)
     {
-        PyObject *pFunc;
         PyObject *result = NULL;
+        PyObject *pFunc = PyObject_GetAttrString(pyPluginManager, func);
 
-        if (pyPluginManager == NULL) {
-            return result;
-        }
+        if (pFunc == NULL)
+            return NULL;
 
-        // Acquire the GIL
-        PyGILState_STATE gstate = PyGILState_Ensure();
-
-        pFunc = PyObject_GetAttrString(pyPluginManager, func);
-        if (pFunc == NULL) {
-            goto eof;
-        }
-
-        if (pFunc && PyCallable_Check(pFunc)) {
+        if (PyCallable_Check(pFunc)) {
             PyObject *pArgs = PyTuple_New(n);
 
-            va_list args;
-            va_start(args, n);
             for (int i = 0; i < n; ++i) {
                 PyObject *pValue = PyLong_FromSize_t((size_t)va_arg(args, void *));
                 PyTuple_SetItem(pArgs, i, pValue);
             }
-            va_end(args);
 
             result = PyObject_CallObject(pFunc, pArgs);
             Py_DECREF(pArgs);
-            if (result == NULL) {
-                PyErr_Print();
-                goto eofr;
-            }
-
-        } else {
-            if (PyErr_Occurred())
-                PyErr_Print();
         }
 
-eofr:
         Py_XDECREF(pFunc);
-eof:
+        return result;
+    }
+
+    void vcall(const char *func, int n, ...)
+    {
+#ifdef PYPLUGIN_THREADED
+        WaitThread();
+#endif
+        if (pyPluginManager == NULL)
+            return;
+
+        // Acquire the GIL
+        PyGILState_STATE gstate = PyGILState_Ensure();
+
+        va_list args;
+        va_start(args, n);
+        PyObject *pyresult = this->pycall(func, n, args);
+        va_end(args);
+        if (pyresult == NULL || PyErr_Occurred()) {
+            PyErr_Print();
+            python_log(__FUNCTION__, __LINE__, "Failed to call \"%s\"\n", func);
+        }
+        Py_DECREF(pyresult);
+
+        // Release the GIL. No Python API allowed beyond this point.
+        PyGILState_Release(gstate);
+    }
+
+    intptr_t icall(intptr_t defresult, const char *func, int n, ...)
+    {
+#ifdef PYPLUGIN_THREADED
+        WaitThread();
+#endif
+        if (pyPluginManager == NULL)
+            return defresult;
+
+        // Acquire the GIL
+        PyGILState_STATE gstate = PyGILState_Ensure();
+
+        intptr_t result = defresult;
+        va_list args;
+        va_start(args, n);
+        PyObject *pyresult = this->pycall(func, n, args);
+        va_end(args);
+        if( pyresult != NULL && PyLong_Check(pyresult) )
+            result = (intptr_t)PyLong_AsSize_t(pyresult);
+        if (pyresult == NULL || PyErr_Occurred()) {
+            PyErr_Print();
+            python_log(__FUNCTION__, __LINE__, "Failed to call \"%s\"\n", func);
+            result = defresult;
+        }
+        Py_DECREF(pyresult);
+
         // Release the GIL. No Python API allowed beyond this point.
         PyGILState_Release(gstate);
         return result;
     }
 
+    HANDLE hcall(HANDLE defresult, const char *func, int n, ...)
+    {
+#ifdef PYPLUGIN_THREADED
+        WaitThread();
+#endif
+        if (pyPluginManager == NULL)
+            return defresult;
+
+        // Acquire the GIL
+        PyGILState_STATE gstate = PyGILState_Ensure();
+
+        HANDLE result = defresult;
+        va_list args;
+        va_start(args, n);
+        PyObject *pyresult = this->pycall(func, n, args);
+        va_end(args);
+        if( pyresult != NULL && PyLong_Check(pyresult) )
+            result = (HANDLE)PyLong_AsSize_t(pyresult);
+        if (pyresult == NULL || PyErr_Occurred()) {
+            PyErr_Print();
+            python_log(__FUNCTION__, __LINE__, "Failed to call \"%s\"\n", func);
+            result = defresult;
+        }
+        Py_DECREF(pyresult);
+
+        // Release the GIL. No Python API allowed beyond this point.
+        PyGILState_Release(gstate);
+        return result;
+    }
 } *g_python_holder = nullptr;
 
 
 HANDLE WINAPI AnalyseW(const struct AnalyseInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "AnalyseW\n", Info);
-    HANDLE result;
-    PyObject *pyresult = g_python_holder->vcall("AnalyseW", 1, Info);
-    PYTHON_HANDLE(INVALID_HANDLE_VALUE)
-    return result;
+    return g_python_holder->hcall(INVALID_HANDLE_VALUE, "AnalyseW", 1, Info);
 }
 
 void WINAPI CloseAnalyseW(const struct CloseAnalyseInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "CloseAnalyseW(%p)\n", Info);
-    PyObject *pyresult = g_python_holder->vcall("CloseAnalyseW", 1, Info);
-    PYTHON_VOID()
+    g_python_holder->vcall("CloseAnalyseW", 1, Info);
 }
 
 void WINAPI ClosePanelW(const struct ClosePanelInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "ClosePanelW(%p)\n", Info);
-    PyObject *pyresult = g_python_holder->vcall("ClosePanelW", 1, Info);
-    PYTHON_VOID()
+    g_python_holder->vcall("ClosePanelW", 1, Info);
 }
 
 intptr_t WINAPI CompareW(const struct CompareInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "CompareW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("CompareW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "CompareW", 1, Info);
 }
 
 intptr_t WINAPI ConfigureW(const struct ConfigureInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "ConfigureW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("ConfigureW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "ConfigureW", 1, Info);
 }
 
 intptr_t WINAPI DeleteFilesW(const struct DeleteFilesInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "DeleteFilesW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("DeleteFilesW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "DeleteFilesW", 1, Info);
 }
 
 void WINAPI ExitFARW(const struct ExitInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "ExitFARW(%p)\n", Info);
-    PyObject *pyresult = g_python_holder->vcall("ExitFARW", 1, Info);
-    PYTHON_VOID()
+    g_python_holder->vcall("ExitFARW", 1, Info);
 }
 
 void WINAPI FreeFindDataW(const struct FreeFindDataInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "FreeFindDataW\n", Info);
-    PyObject *pyresult = g_python_holder->vcall("FreeFindDataW", 1, Info);
-    PYTHON_VOID()
+    g_python_holder->vcall("FreeFindDataW", 1, Info);
 }
 
 intptr_t WINAPI GetFilesW(struct GetFilesInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "GetFilesW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("GetFilesW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "GetFilesW", 1, Info);
 }
 
 intptr_t WINAPI GetFindDataW(struct GetFindDataInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "GetFindDataW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("GetFindDataW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "GetFindDataW", 1, Info);
 }
 
 void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
@@ -323,8 +327,7 @@ void WINAPI GetGlobalInfoW(struct GlobalInfo *Info)
 void WINAPI GetOpenPanelInfoW(struct OpenPanelInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "GetOpenPanelInfoW(%p)\n", Info);
-    PyObject *pyresult = g_python_holder->vcall("GetOpenPanelInfoW", 1, Info);
-    PYTHON_VOID()
+    g_python_holder->vcall("GetOpenPanelInfoW", 1, Info);
 }
 
 void WINAPI GetPluginInfoW(struct PluginInfo *Info)
@@ -334,134 +337,91 @@ void WINAPI GetPluginInfoW(struct PluginInfo *Info)
     Info->Flags = PF_DISABLEPANELS;
     if( g_python_holder == nullptr )
         return;
-    PyObject *pyresult = g_python_holder->vcall("GetPluginInfoW", 1, Info);
-    PYTHON_VOID()
+    g_python_holder->vcall("GetPluginInfoW", 1, Info);
 }
 
 intptr_t WINAPI MakeDirectoryW(struct MakeDirectoryInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "MakeDirectoryW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("MakeDirectoryW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "MakeDirectoryW", 1, Info);
 }
 
 HANDLE WINAPI OpenW(const struct OpenInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "OpenW(%p)\n", Info);
-    HANDLE result;
-    PyObject *pyresult = g_python_holder->vcall("OpenW", 1, Info);
-    PYTHON_HANDLE(INVALID_HANDLE_VALUE)
-    return result;
+    return g_python_holder->hcall(INVALID_HANDLE_VALUE, "OpenW", 1, Info);
 }
 
 intptr_t WINAPI ProcessDialogEventW(const struct ProcessDialogEventInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "ProcessDialogEventW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("ProcessDialogEventW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "ProcessDialogEventW", 1, Info);
 }
 
 intptr_t WINAPI ProcessEditorEventW(const struct ProcessEditorEventInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "ProcessEditorEventW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("ProcessEditorEventW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "ProcessEditorEventW", 1, Info);
 }
 
 intptr_t WINAPI ProcessEditorInputW(const struct ProcessEditorInputInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "ProcessEditorInputW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("ProcessEditorInputW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "ProcessEditorInputW", 1, Info);
 }
 
 intptr_t WINAPI ProcessPanelEventW(const struct ProcessPanelEventInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "ProcessPanelEventW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("ProcessPanelEventW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "ProcessPanelEventW", 1, Info);
 }
 
 intptr_t WINAPI ProcessHostFileW(const struct ProcessHostFileInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "ProcessHostFileW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("ProcessHostFileW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "ProcessHostFileW", 1, Info);
 }
 
 intptr_t WINAPI ProcessPanelInputW(const struct ProcessPanelInputInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "ProcessPanelInputW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("ProcessPanelInputW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "ProcessPanelInputW", 1, Info);
 }
 
 intptr_t WINAPI ProcessConsoleInputW(struct ProcessConsoleInputInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "ProcessConsoleInputW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("ProcessConsoleInputW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "ProcessConsoleInputW", 1, Info);
 }
 
 intptr_t WINAPI ProcessSynchroEventW(const struct ProcessSynchroEventInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "ProcessSynchroEventW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("ProcessSynchroEventW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "ProcessSynchroEventW", 1, Info);
 }
 
 intptr_t WINAPI ProcessViewerEventW(const struct ProcessViewerEventInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "ProcessViewerEventW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("ProcessViewerEventW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "ProcessViewerEventW", 1, Info);
 }
 
 intptr_t WINAPI PutFilesW(const struct PutFilesInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "PutFilesW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("PutFilesW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "PutFilesW", 1, Info);
 }
 
 intptr_t WINAPI SetDirectoryW(const struct SetDirectoryInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "SetDirectoryW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("SetDirectoryW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "SetDirectoryW", 1, Info);
 }
 
 intptr_t WINAPI SetFindListW(const struct SetFindListInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "SetFindListW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("SetFindListW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "SetFindListW", 1, Info);
 }
 
 void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
@@ -474,31 +434,23 @@ void WINAPI SetStartupInfoW(const struct PluginStartupInfo *Info)
 
     std::string splugindir(pythonPluginInstallDir);
     g_python_holder = new PythonHolder(splugindir);
-    PyObject *pyresult = g_python_holder->vcall("SetStartupInfoW", 2, &::Info, &::FSF);
-    PYTHON_VOID()
+    g_python_holder->vcall("SetStartupInfoW", 2, &::Info, &::FSF);
 }
 
 intptr_t WINAPI GetContentFieldsW(const struct GetContentFieldsInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "GetContentFieldsW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("GetContentFieldsW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "GetContentFieldsW", 1, Info);
 }
 
 intptr_t WINAPI GetContentDataW(struct GetContentDataInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "GetContentDataW(%p)\n", Info);
-    intptr_t result;
-    PyObject *pyresult = g_python_holder->vcall("GetContentDataW", 1, Info);
-    PYTHON_INT(NULL)
-    return result;
+    return g_python_holder->icall(NULL, "GetContentDataW", 1, Info);
 }
 
 void WINAPI FreeContentDataW(const struct GetContentDataInfo *Info)
 {
     python_log(__FUNCTION__, __LINE__, "FreeContentDataW(%p)\n", Info);
-    PyObject *pyresult = g_python_holder->vcall("FreeContentDataW", 1, Info);
-    PYTHON_VOID()
+    g_python_holder->vcall("FreeContentDataW", 1, Info);
 }
