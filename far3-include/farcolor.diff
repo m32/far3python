@@ -1,0 +1,13 @@
+--- farcolor.hpp-	2023-12-28 01:02:22.190624100 +0100
++++ farcolor.hpp	2024-09-16 20:51:51.920172700 +0200
+@@ -1,8 +1,10 @@
+ ﻿#ifndef FARCOLOR_HPP_57151931_4591_44A5_92CF_8E51D1FBC57E
+ #define FARCOLOR_HPP_57151931_4591_44A5_92CF_8E51D1FBC57E
++#if defined(NO_PYTHON_PLUGIN)
+ #pragma once
++#endif
+ 
+ /*
+ farcolor.hpp
+ 
+ Colors Index for FAR Manager 3.0.6226.0

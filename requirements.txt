@@ -1,0 +1,9 @@
+cffi
+dateutils
+pcpp
+Pillow
+pycparser
+python-dateutil
+pytz
+pywin32
+wxPython

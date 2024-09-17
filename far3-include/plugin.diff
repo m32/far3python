@@ -1,5 +1,5 @@
---- plugin.hpp-	2023-07-19 22:34:23.401282200 +0200
-+++ plugin.hpp	2023-12-28 00:52:55.612329400 +0100
+--- plugin.hpp-	2023-12-28 01:02:22.455880800 +0100
++++ plugin.hpp	2024-09-16 20:55:43.326763800 +0200
 @@ -1,9 +1,11 @@
  // validator: no-bom
  #ifndef PLUGIN_HPP_3FC978E9_63BE_4FC2_8F96_8188B0AF8363
@@ -11,9 +11,9 @@
  /*
  plugin.hpp
  
- Plugin API for Far Manager 3.0.6161.0
+ Plugin API for Far Manager 3.0.6226.0
 @@ -47,23 +49,28 @@
- #define FARMANAGERVERSION_BUILD 6161
+ #define FARMANAGERVERSION_BUILD 6226
  #define FARMANAGERVERSION_STAGE VS_PRIVATE
  
  #ifndef RC_INVOKED
@@ -42,19 +42,19 @@
  #define CP_REVERSEBOM ((uintptr_t)1201)
  #define CP_DEFAULT    ((uintptr_t)-1)
  #define CP_REDETECT   ((uintptr_t)-2)
-@@ -266,10 +273,11 @@
- 	DI_LISTBOX                      = 11,
+@@ -394,10 +401,11 @@
  
- 	DI_USERCONTROL                  =255,
- };
- 
-+#if defined(NO_PYTHON_PLUGIN)
  /*
     Check diagol element type has inputstring?
     (DI_EDIT, DI_FIXEDIT, DI_PSWEDIT, etc)
  */
++#if defined(NO_PYTHON_PLUGIN)
  static __inline BOOL IsEdit(enum FARDIALOGITEMTYPES Type)
-@@ -283,10 +291,11 @@
+ {
+ 	switch (Type)
+ 	{
+ 		case DI_EDIT:
+@@ -407,10 +415,11 @@
  			return TRUE;
  		default:
  			return FALSE;
@@ -66,14 +66,13 @@
  FAR_INLINE_CONSTANT FARDIALOGITEMFLAGS
  	DIF_BOXCOLOR              = 0x0000000000000200ULL,
  	DIF_GROUP                 = 0x0000000000000400ULL,
-@@ -2101,14 +2110,20 @@
- 	FCT_ANY=0,
+@@ -2232,13 +2241,19 @@
  	FCT_STREAM=1,
  	FCT_COLUMN=2
  };
  
-+#if defined(NO_PYTHON_PLUGIN)
  // <C&C++>
++#if defined(NO_PYTHON_PLUGIN)
  typedef int (WINAPIV *FARSTDSPRINTF)(wchar_t *Buffer,const wchar_t *Format,...);
  typedef int (WINAPIV *FARSTDSNPRINTF)(wchar_t *Buffer,size_t Sizebuf,const wchar_t *Format,...);
  typedef int (WINAPIV *FARSTDSSCANF)(const wchar_t *Buffer, const wchar_t *Format,...);
@@ -87,7 +86,7 @@
  typedef void   *(WINAPI *FARSTDBSEARCH)(const void *key, const void *base, size_t nelem, size_t width, int (WINAPI *fcmp)(const void *, const void *,void *userparam),void *userparam);
  typedef size_t (WINAPI *FARSTDGETFILEOWNER)(const wchar_t *Computer,const wchar_t *Name,wchar_t *Owner,size_t Size);
  typedef size_t (WINAPI *FARSTDGETNUMBEROFLINKS)(const wchar_t *Name);
-@@ -2417,10 +2432,11 @@
+@@ -2547,10 +2562,11 @@
  	DWORD Revision;
  	DWORD Build;
  	enum VERSION_STAGE Stage;
@@ -99,7 +98,7 @@
  	return
  		(Current->Major > Required->Major) ||
  		(Current->Major == Required->Major && Current->Minor > Required->Minor) ||
-@@ -2431,10 +2447,11 @@
+@@ -2561,10 +2577,11 @@
  static __inline struct VersionInfo MAKEFARVERSION(DWORD Major, DWORD Minor, DWORD Revision, DWORD Build, enum VERSION_STAGE Stage)
  {
  	const struct VersionInfo Info = {Major, Minor, Revision, Build, Stage};
@@ -111,19 +110,19 @@
  
  struct GlobalInfo
  {
-@@ -2931,10 +2948,11 @@
+@@ -3058,10 +3075,11 @@
+ 	size_t StructSize;
+ 	const wchar_t* Summary;
+ 	const wchar_t* Description;
  };
  
++#if defined(NO_PYTHON_PLUGIN)
  FAR_INLINE_CONSTANT UUID FarGuid =
  {0x00000000, 0x0000, 0x0000, {0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00}};
  
-+#if defined(NO_PYTHON_PLUGIN)
  #ifdef __cplusplus
  extern "C"
- {
- #endif
- // Exported Functions
-@@ -2972,9 +2990,10 @@
+@@ -3102,9 +3120,10 @@
  	void     WINAPI FreeContentDataW(const struct GetContentDataInfo *Info);
  
  #ifdef __cplusplus

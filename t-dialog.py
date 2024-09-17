@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(1, 'far3-installed')
+
 from far3.far3cffi import ffi, ffic
 from far3 import pluginmanager
 from far3 import fardialogbuilder as dlgb
@@ -47,16 +50,17 @@ def main():
     def DialogProc(hDlg, Msg, Param1, Param2):
         return self.info.DefDlgProc(hDlg, Msg, Param1, Param2)
 
+    dlg = dlgb.Dialog(cls)
     # { DI_DOUBLEBOX, L-2,1, E+2,2+H, 0, nullptr,nullptr, 0, title.c_str() },
     b = dlgb.DialogBuilder(
-        cls,
+        dlg,
         DialogProc,
         "Python path",
         "pythonpath",
         0,
         dlgb.VSizer(
             dlgb.HSizer(
-                dlgb.TEXT(text="Python path:"),
+                dlgb.TEXT(None, text="Python path:"),
                 dlgb.EDIT("path", width=60, maxlength=120)
             ),
             dlgb.HSizer(
@@ -66,7 +70,7 @@ def main():
         ),
     )
 
-    dlg = b.build(-1, -1)
+    b.build(-1, -1)
     dlg.SetText(dlg.ID_path, 'abc')
     res = dlg.Info.DialogRun(dlg.hDlg)
     path = dlg.GetText(dlg.ID_path)

@@ -236,8 +236,7 @@ class PluginManager(PluginBase):
         g = self.GUID2UUID(Info.Guid)
         log.debug("ConfigureW({}, {})".format(g, Info.Instance))
         for plugin in self.plugins:
-            pinfo = plugin.Plugin
-            if pinfo.guid == g:
+            if plugin.Plugin.guid == g:
                 plugin = plugin.Plugin(self.Info)
                 plugin.ConfigureW(Info)
                 return
