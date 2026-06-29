@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(1, '../far3-installed')
+
 from far3 import *
 
 import os

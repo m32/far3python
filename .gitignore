@@ -1,4 +1,5 @@
 .not-git/
+far2/
 far3-installed/
 __pycache__
 far3cffi.py.h

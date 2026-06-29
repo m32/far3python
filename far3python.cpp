@@ -8,7 +8,9 @@
 
 #include <Python.h>
 
-#include <plugin.hpp->
+#undef FCF_FG_BOLD
+
+#include <plugin.hpp>
 #include <farcolor.hpp>
 
 // {308868BA-5773-4C89-8142-DF877868E06A}
@@ -92,36 +94,49 @@ public:
     PythonHolder(std::string pythonPluginInstallDir)
     {
         pluginDir = ReplaceAll(pythonPluginInstallDir, std::string("\\"), std::string("\\\\"));
+        python_log(__FUNCTION__, __LINE__, "pluginDir=%s\n", pluginDir.c_str());
 
         std::wstring progname = L"far3python";
 
         Py_SetProgramName((wchar_t *)progname.c_str());
+        //python_log(__FUNCTION__, __LINE__, "1\n");
         Py_Initialize();
+        //python_log(__FUNCTION__, __LINE__, "2\n");
 
         PyEval_InitThreads();
+        //python_log(__FUNCTION__, __LINE__, "3\n");
 
         std::string syspath = "import sys; ";
         syspath += "sys.path.insert(1, '" + pluginDir + "')";
-        python_log(__FUNCTION__, __LINE__, "syspath=%s\n", syspath.c_str());
+        //python_log(__FUNCTION__, __LINE__, "syspath=%s\n", syspath.c_str());
 
         PyRun_SimpleString(syspath.c_str());
+        //python_log(__FUNCTION__, __LINE__, "4\n");
 
         pyPluginModule = PyImport_ImportModule("far3");
+        //python_log(__FUNCTION__, __LINE__, "5\n");
         if (pyPluginModule == NULL) {
+            //python_log(__FUNCTION__, __LINE__, "6\n");
             PyErr_Print();
-            python_log(__FUNCTION__, __LINE__, "Failed to load \"far3\"\n");
+            //python_log(__FUNCTION__, __LINE__, "Failed to load \"far3\"\n");
             return;
         }
+        //python_log(__FUNCTION__, __LINE__, "7\n");
 
         pyPluginManager = PyObject_GetAttrString(pyPluginModule, "pluginmanager");
+        //python_log(__FUNCTION__, __LINE__, "8\n");
         if (pyPluginManager == NULL) {
+            //python_log(__FUNCTION__, __LINE__, "9\n");
             python_log(__FUNCTION__, __LINE__, "Failed to load \"far3.pluginmanager\"\n");
             Py_DECREF(pyPluginModule);
             pyPluginModule = NULL;
         } else {
+            //python_log(__FUNCTION__, __LINE__, "10\n");
             vcall("PySetup", 1, pluginDir.c_str());
+            //python_log(__FUNCTION__, __LINE__, "11\n");
         }
 
+        //python_log(__FUNCTION__, __LINE__, "12\n");
         python_log(__FUNCTION__, __LINE__, "complete\n");
     }
 

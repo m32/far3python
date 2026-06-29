@@ -9,6 +9,7 @@ import cffi
 far3sdk = sys.argv[1]
 
 cpp = pcpp.Preprocessor()
+cpp.define('PYTHON_PLUGIN')
 cpp.add_path(far3sdk)
 data = open('far3cffi.h', 'rt').read()
 cpp.parse(data)

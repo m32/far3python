@@ -1,8 +1,9 @@
+LIBRARY
 EXPORTS
    AnalyseW
    ClosePanelW
-   ConfigureW
    CompareW
+   ConfigureW
    FreeFindDataW
    GetFindDataW
    GetGlobalInfoW

@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(1, 'far3-installed')
+sys.path.insert(1, '../far3-installed')
 
 from far3.far3cffi import ffi, ffic
 from far3 import pluginmanager
